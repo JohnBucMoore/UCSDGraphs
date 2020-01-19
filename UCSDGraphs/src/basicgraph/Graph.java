@@ -25,9 +25,8 @@ public abstract class Graph {
 
 	private int numVertices;
 	private int numEdges;
-	//optional association of String labels to vertices 
+	//optional association of String labels to vertices
 	private Map<Integer,String> vertexLabels;
-	
 	/**
 	 * Create a new empty Graph
 	 */
@@ -110,8 +109,6 @@ public abstract class Graph {
 	 * 	via incoming edges to v. 
 	 */
 	public abstract List<Integer> getInNeighbors(int v);
-	
-	
 
 	/** 
 	 * The degree sequence of a graph is a sorted (organized in numerical order 
@@ -121,7 +118,29 @@ public abstract class Graph {
 	 * @return The degree sequence of this graph.
 	 */
 	public List<Integer> degreeSequence() {
-		return null;
+		List<Integer> degSeq = new ArrayList();
+		for (int h = 0; h < numVertices; h++) {
+			int largestDegIndex = 0;
+			int largestDegVal = 0;
+			for (int i = 0; i < numVertices; i++) {
+				int currDegsVal = 0;
+				List<Integer> out = getNeighbors(i);
+				List<Integer> in = getInNeighbors(i);
+				if (out != null && in != null) {
+					currDegsVal = out.size() + in.size();
+				} else if (out != null && in == null) {
+					currDegsVal = out.size();
+				} else if (out == null && in != null) {
+					currDegsVal = in.size();
+				}
+				if (currDegsVal >= largestDegVal && !degSeq.contains(i)) {
+					largestDegIndex = i;
+					largestDegVal = currDegsVal;
+				}
+			}
+			degSeq.add(largestDegIndex);
+		}
+		return degSeq;
 	}
 	
 	/**
