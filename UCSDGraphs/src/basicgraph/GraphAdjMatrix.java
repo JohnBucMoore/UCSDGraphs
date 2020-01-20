@@ -20,10 +20,12 @@ public class GraphAdjMatrix extends Graph {
 
 	private final int defaultNumVertices = 5;
 	private int[][] adjMatrix;
+	private int[][] sqAdjMatrix;
 	
 	/** Create a new empty Graph */
 	public GraphAdjMatrix () {
 		adjMatrix = new int[defaultNumVertices][defaultNumVertices];
+		
 	}
 	
 	/** 
@@ -95,6 +97,24 @@ public class GraphAdjMatrix extends Graph {
 		return inNeighbors;
 	}
 	
+	private void matrixMultiplication() {
+		int numV = getNumVertices();
+		sqAdjMatrix = new int[numV][numV];
+		int rowTimesColumn = 0;
+		// iterate over rows
+		for (int i = 0; i < numV; i++) {
+			//iterate over columns
+			for (int j = 0; j < numV; j++) {
+				//iterate over vertices
+				for (int k = 0; k < numV; k++) {
+					rowTimesColumn += adjMatrix[i][k]*adjMatrix[k][j];
+				}
+				sqAdjMatrix[i][j] = rowTimesColumn;
+				rowTimesColumn = 0;
+			}
+		}
+	}
+	
 	/** 
 	 * Implement the abstract method for finding all 
 	 * vertices reachable by two hops from v.
@@ -104,11 +124,22 @@ public class GraphAdjMatrix extends Graph {
 	 * @return List<Integer> a list of indices of vertices.  
 	 */	
 	public List<Integer> getDistance2(int v) {
+		//uncomment below to implement without using matrix multiplication
+		/*
 		List<Integer> outNeighbors = getNeighbors(v);
 		List<Integer> twoHopNeighbors = new ArrayList<Integer>();
 		for (int i = 0; i < getNumVertices(); i ++) {
 			for (int j=0; j< adjMatrix[v][i]; j ++) {
 				twoHopNeighbors.addAll(getNeighbors(i));
+			}
+		}
+		
+		*/
+		matrixMultiplication();
+		List<Integer> twoHopNeighbors = new ArrayList<Integer>();
+		for (int i = 0; i < getNumVertices(); i ++) {
+			for (int j=0; j< sqAdjMatrix[v][i]; j ++) {
+				twoHopNeighbors.add(i);
 			}
 		}
 		return twoHopNeighbors;
