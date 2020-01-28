@@ -8,6 +8,10 @@
 package roadgraph;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -23,15 +27,19 @@ import util.GraphLoader;
  *
  */
 public class MapGraph {
-	//TODO: Add your member variables here in WEEK 3
+	private List<MapNode> vertices; //adjacencyList
+	private HashMap<GeographicPoint, List<MapNode>> nodeMap;
+	private List<MapEdge> edges;
 	
-	
+	//pointMap
 	/** 
 	 * Create a new empty MapGraph 
 	 */
 	public MapGraph()
 	{
-		// TODO: Implement in this constructor in WEEK 3
+		vertices = new ArrayList<MapNode>();
+		nodeMap = new HashMap<GeographicPoint, List<MapNode>>();
+		edges = new LinkedList<MapEdge>();
 	}
 	
 	/**
@@ -40,8 +48,7 @@ public class MapGraph {
 	 */
 	public int getNumVertices()
 	{
-		//TODO: Implement this method in WEEK 3
-		return 0;
+		return vertices.size();
 	}
 	
 	/**
@@ -50,8 +57,11 @@ public class MapGraph {
 	 */
 	public Set<GeographicPoint> getVertices()
 	{
-		//TODO: Implement this method in WEEK 3
-		return null;
+		Set<GeographicPoint> intersections = new HashSet<GeographicPoint>();
+		for (MapNode vertice : vertices) {
+			intersections.add(vertice.getLocation());
+		}
+		return intersections;
 	}
 	
 	/**
@@ -60,8 +70,7 @@ public class MapGraph {
 	 */
 	public int getNumEdges()
 	{
-		//TODO: Implement this method in WEEK 3
-		return 0;
+		return edges.size();
 	}
 
 	
@@ -75,7 +84,13 @@ public class MapGraph {
 	 */
 	public boolean addVertex(GeographicPoint location)
 	{
-		// TODO: Implement this method in WEEK 3
+		if (!nodeMap.containsKey(location) && location != null) {
+			MapNode vertex = new MapNode(location);
+			int v = getNumVertices();
+			vertices.add(v,vertex);
+			nodeMap.put(location, new ArrayList());
+			return true;
+		}
 		return false;
 	}
 	
@@ -93,9 +108,30 @@ public class MapGraph {
 	 */
 	public void addEdge(GeographicPoint from, GeographicPoint to, String roadName,
 			String roadType, double length) throws IllegalArgumentException {
-
-		//TODO: Implement this method in WEEK 3
-		
+		if (!(nodeMap.containsKey(from) && nodeMap.containsKey(to))) {
+			throw new IllegalArgumentException();
+		}
+		MapEdge edge = new MapEdge(from, to, roadName, roadType, length);
+		edges.add(edge);
+		MapNode f = null;
+		MapNode t = null;
+		for (MapNode vertex : vertices) {
+			if (vertex.getLocation().equals(from)) {
+				f = vertex;
+			}
+			if (vertex.getLocation().equals(to)) {
+				t = vertex;
+			}
+			if (f != null && t != null) {
+				break;
+			}
+		}
+		if (t != null) {
+			nodeMap.get(from).add(t);
+		}
+		if (f != null) {
+			f.addEdge(edge);
+		}
 	}
 	
 
@@ -206,6 +242,13 @@ public class MapGraph {
 		System.out.print("DONE. \nLoading the map...");
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", firstMap);
 		System.out.println("DONE.");
+		
+		MapGraph simpleTestMap = new MapGraph();
+		GraphLoader.loadRoadMap("data/testdata/simpletest.map", simpleTestMap);
+		
+		System.out.println(simpleTestMap.getNumVertices());
+		System.out.println(simpleTestMap.getNumEdges());
+		
 		
 		// You can use this method for testing.  
 		
