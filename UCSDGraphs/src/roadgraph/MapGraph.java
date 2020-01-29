@@ -13,11 +13,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 
 import geography.GeographicPoint;
 import util.GraphLoader;
+import week3example.MazeNode;
 
 /**
  * @author UCSD MOOC development team and YOU
@@ -159,12 +162,46 @@ public class MapGraph {
 	public List<GeographicPoint> bfs(GeographicPoint start, 
 			 					     GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
-		// TODO: Implement this method in WEEK 3
+		Queue<GeographicPoint> q = new LinkedList<>();
+		Set<GeographicPoint> visited = new HashSet<>();
+		Map<GeographicPoint, GeographicPoint> parentMap = new HashMap<>();
+		q.add(start);
+		visited.add(start);
+		GeographicPoint curr = start;
+		boolean found = false;
 		
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
+		while (!q.isEmpty()) {
+			curr = q.remove();
+			if (curr.equals(goal)) {
+				found = true;
+				break;
+			}
+			
+			List<MapNode> neighbors = nodeMap.get(curr);
+			for (MapNode n : neighbors) {
+				if (!visited.contains(n.getLocation())) {
+					visited.add(n.getLocation());
+					parentMap.put(n.getLocation(), curr);
+					q.add(n.getLocation());
+					nodeSearched.accept(n.getLocation());
+				}
+			}
+		}
 
-		return null;
+		if (!found) {
+			System.out.println("No path exists");
+			return new LinkedList<GeographicPoint>();
+		}
+
+		// reconstruct the path
+		LinkedList<GeographicPoint> path = new LinkedList<GeographicPoint>();
+		GeographicPoint currpt = goal;
+		while (currpt != start) {
+			path.addFirst(currpt);
+			currpt = parentMap.get(currpt);
+		}
+		path.addFirst(start);
+		return path;
 	}
 	
 
@@ -249,7 +286,11 @@ public class MapGraph {
 		System.out.println(simpleTestMap.getNumVertices());
 		System.out.println(simpleTestMap.getNumEdges());
 		
+		GeographicPoint testStart = new GeographicPoint(1.0, 1.0);
+		GeographicPoint testEnd = new GeographicPoint(8.0, -1.0);
 		
+		List<GeographicPoint> testroute = simpleTestMap.bfs(testStart,testEnd);
+		System.out.println(testroute);
 		// You can use this method for testing.  
 		
 		
