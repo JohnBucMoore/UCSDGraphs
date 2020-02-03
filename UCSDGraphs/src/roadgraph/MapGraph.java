@@ -220,8 +220,8 @@ public class MapGraph {
 		return distances;
 	}
 	
-	public void updateDistance(Double newDist, MapNode neighborNode, Map<MapNode, Double> currDistFromStart) {
-			neighborNode.setDist(newDist);
+	public void updateDistance(Double newDist, MapNode neighborNode, MapNode endNode, Map<MapNode, Double> currDistFromStart) {
+			neighborNode.setDist(newDist + heuristicEstimatedCost(neighborNode, endNode));
 			currDistFromStart.replace(neighborNode, newDist);
 	}
 	
@@ -317,7 +317,7 @@ public class MapGraph {
 					if (!visited.contains(n)) {
 						double neighborDist = currDist + neighbor.getDistance();
 						 if(neighborDist < currDistFromStart.get(n)) {
-							updateDistance(neighborDist, n, currDistFromStart);
+							updateDistance(neighborDist, n, n, currDistFromStart);
 						 	parentMap.put(n, curr);
 						 	q.add(n);
 						 }
@@ -329,6 +329,10 @@ public class MapGraph {
 		return null;
 	}
 
+	public double heuristicEstimatedCost(MapNode n, MapNode g) {
+		return n.getLocation().distance(g.getLocation());
+	}
+	
 	/** Find the path from start to goal using A-Star search
 	 * 
 	 * @param start The starting location
@@ -353,10 +357,58 @@ public class MapGraph {
 	public List<GeographicPoint> aStarSearch(GeographicPoint start, 
 											 GeographicPoint goal, Consumer<GeographicPoint> nodeSearched)
 	{
-		// TODO: Implement this method in WEEK 4
+		PriorityQueue<MapNode> q = new PriorityQueue<MapNode>();
+		Set<MapNode> visited = new HashSet<>();
+		HashMap<MapNode, MapNode> parentMap = new HashMap<>();
+		List<GeographicPoint> path = new LinkedList<>();
+		Map<MapNode, Double> currDistFromStart = initializeDistances(start);
+		MapNode s = null;
+		MapNode g = null;
+		for (MapNode vertex : vertices) {
+			if (vertex.getLocation().equals(start)) {
+				s = vertex;
+			} else if (vertex.getLocation().equals(goal)) {
+				g = vertex;
+			}
+		}
 		
-		// Hook for visualization.  See writeup.
-		//nodeSearched.accept(next.getLocation());
+		s.setDist(heuristicEstimatedCost(s,g));
+		q.add(s);
+		MapNode curr = null;
+		
+		while(!q.isEmpty()) {
+			curr = q.poll();
+			if(!visited.contains(curr)) {
+				visited.add(curr);
+				GeographicPoint loc = curr.getLocation();
+				nodeSearched.accept(loc);
+				if(loc.equals(goal)) {
+					System.out.println("Total number visited: "+visited.size());
+					path = reconstructPath(parentMap, s, g);
+					return path;
+				}
+				double currDist = currDistFromStart.get(curr);
+				List<MapEdge> neighbors = curr.getEdges();
+				List<MapNode> nNodes = nodeMap.get(curr.getLocation());
+				for(MapEdge neighbor : neighbors) {
+					GeographicPoint nGP = neighbor.getEnd();
+					MapNode n = null;
+					for (MapNode node : nNodes) {
+						if (node.getLocation().equals(nGP)) {
+							n = node;
+						}
+					}
+					if (!visited.contains(n)) {
+						double neighborDist = currDist + neighbor.getDistance();
+						 if(neighborDist < currDistFromStart.get(n)) {
+							updateDistance(neighborDist, n, g, currDistFromStart);
+						 	parentMap.put(n, curr);
+						 	q.add(n);
+						 }
+					}
+				}
+			}
+		}
 		
 		return null;
 	}
@@ -427,7 +479,7 @@ public class MapGraph {
 		System.out.println(testEnd);
 		System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
 		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
-		//List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
+		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
 
 		
 		MapGraph testMap = new MapGraph();
@@ -438,7 +490,7 @@ public class MapGraph {
 		testEnd = new GeographicPoint(32.869255, -117.216927);
 		System.out.println("Test 2 using utc: Dijkstra should be 13 and AStar should be 5");
 		testroute = testMap.dijkstra(testStart,testEnd);
-		//testroute2 = testMap.aStarSearch(testStart,testEnd);
+		testroute2 = testMap.aStarSearch(testStart,testEnd);
 
 		
 		// A slightly more complex test using real data
@@ -446,7 +498,7 @@ public class MapGraph {
 		testEnd = new GeographicPoint(32.8697828, -117.2244506);
 		System.out.println("Test 3 using utc: Dijkstra should be 37 and AStar should be 10");
 		testroute = testMap.dijkstra(testStart,testEnd);
-		//testroute2 = testMap.aStarSearch(testStart,testEnd);
+		testroute2 = testMap.aStarSearch(testStart,testEnd);
 		
 		
 		/* Use this code in Week 3 End of Week Quiz */
